@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product_category;
 use App\Models\Products;
 use Illuminate\Http\Request;
 
@@ -10,11 +11,22 @@ class ProductsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $req)
     {
         //
+        $data=[];
+        $productCategory=Product_category::all();
+        $category_id=$req->get('category');
+        if(!$category_id){
+            $category_id=$productCategory[0]->id;
+        }
+        $products=Products::where('category_id',$category_id)->get();
+        $data['productCategory']=$productCategory;
+        $data['products']=$products;
+        $data['category_id']=$category_id;
+        // dd($products);
+        return view('products/index',$data);
     }
-
     /**
      * Show the form for creating a new resource.
      */
@@ -34,9 +46,19 @@ class ProductsController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Products $products)
+    public function show(Request $req,$id)
     {
-        //
+        $data=[];
+        $product=Products::with('category')->find($id);
+        $data['product']=$product;
+        $related_products=[];
+        if($product){
+            $related_products=Products::where('category_id',$product->category_id)
+                                        ->where('id','<>',$product->id)
+                                        ->get();
+        }
+        $data['related_products']=$related_products;
+        return view('products.productDetails',$data);
     }
 
     /**
